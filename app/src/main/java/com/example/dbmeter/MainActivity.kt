@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
     private var weighting = Weighting.A
     private var response = Response.FAST
     private var trimDb = 0.0
-    private var preferUnprocessed = true
+    private var preferUnprocessed = false
 
     private val historyData = mutableListOf<Pair<Long, Double>>() // timestamp, dB value
     private var lastLevel = 0.0
@@ -104,7 +104,7 @@ class MainActivity : AppCompatActivity() {
         weighting = Weighting.entries.firstOrNull { it.name == prefs.getString("weighting", null) } ?: Weighting.A
         response = Response.entries.firstOrNull { it.name == prefs.getString("response", null) } ?: Response.FAST
         trimDb = prefs.getFloat("trimDb", 0f).toDouble()
-        preferUnprocessed = prefs.getBoolean("preferUnprocessed", true)
+        preferUnprocessed = prefs.getBoolean("preferUnprocessed", false)
         updateSettingLabels()
 
         btnWeighting.setOnClickListener {

@@ -7,9 +7,9 @@ graph, and the maximum, minimum and equivalent level (Leq) since the last reset.
 
 ## What it does
 
-- Records raw 16-bit audio at 48 kHz from Android's unprocessed microphone source (or the
-  voice-recognition source on phones without one), so no automatic gain or noise suppression
-  changes the level.
+- Records raw 16-bit audio at 48 kHz from Android's voice-recognition microphone source,
+  which applies no automatic gain. The calibration dialog can switch to the unprocessed
+  source, which overloads later but reads far too high on some phones.
 - A, C and Z frequency weighting (IEC 61672 curves) and Fast (125 ms) or Slow (1 s) time
   weighting of the squared signal, as a hardware meter does.
 - **Leq** is an energy average, not an average of decibel values.

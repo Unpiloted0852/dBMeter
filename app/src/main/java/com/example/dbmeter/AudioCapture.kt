@@ -6,8 +6,6 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import android.media.MicrophoneInfo
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import java.util.Locale
@@ -17,12 +15,13 @@ import kotlin.math.max
  * Reads the microphone on its own thread and delivers a [Reading] to [onReading] on the
  * main thread about ten times a second.
  *
- * It records raw 16-bit PCM from the UNPROCESSED source where the phone supports it,
- * otherwise from VOICE_RECOGNITION; neither applies automatic gain or noise suppression.
- * Android's compatibility rules fix the sensitivity of both (94 dB SPL at 1 kHz gives an
- * RMS of 520 for UNPROCESSED, 90 dB SPL gives 2500 for VOICE_RECOGNITION), which is where
- * the default calibration comes from, unless the phone reports its own microphone
- * sensitivity. [trimDb] is the user's correction on top of it.
+ * It records raw 16-bit PCM from VOICE_RECOGNITION, or from UNPROCESSED if asked to and
+ * the phone has it; neither applies automatic gain. Android's compatibility rules give a
+ * sensitivity for each (90 dB SPL at 1 kHz gives an RMS of 2500 for VOICE_RECOGNITION,
+ * 94 dB SPL gives 520 for UNPROCESSED), which is where the default calibration comes from.
+ * Phones do not all keep to the UNPROCESSED figure (a Moto G Stylus 5G 2024 read about
+ * 20 dB high on it), so VOICE_RECOGNITION is the default. [trimDb] is the user's
+ * correction on top.
  */
 class AudioCapture(
     context: Context,
@@ -89,16 +88,10 @@ class AudioCapture(
                     continue
                 }
                 val isUnprocessed = source == MediaRecorder.AudioSource.UNPROCESSED
-                val reported = if (isUnprocessed) reportedSensitivity(record) else null
-                baseCalibrationDb = when {
-                    reported != null -> 94.0 - reported
-                    isUnprocessed -> UNPROCESSED_FULL_SCALE_DB
-                    else -> VOICE_RECOGNITION_FULL_SCALE_DB
-                }
+                baseCalibrationDb = if (isUnprocessed) UNPROCESSED_FULL_SCALE_DB else VOICE_RECOGNITION_FULL_SCALE_DB
                 description = String.format(
-                    Locale.US, "%s source, %d kHz, full scale %.1f dB (%s)",
-                    if (isUnprocessed) "Unprocessed" else "Voice recognition", rate / 1000,
-                    baseCalibrationDb, if (reported != null) "reported by phone" else "Android reference"
+                    Locale.US, "%s source, %d kHz, full scale %.1f dB",
+                    if (isUnprocessed) "Unprocessed" else "Voice recognition", rate / 1000, baseCalibrationDb
                 )
                 val m = LevelMeter(rate, weighting, response)
                 m.calibrationDb = baseCalibrationDb + trimDb
@@ -109,19 +102,6 @@ class AudioCapture(
             }
         }
         return false
-    }
-
-    /** The phone's own figure for its microphone, in dBFS at 94 dB SPL, if it gives a usable one. */
-    private fun reportedSensitivity(record: AudioRecord): Double? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return null
-        val microphones = try {
-            record.activeMicrophones
-        } catch (e: Exception) {
-            return null
-        }
-        return microphones.map { it.sensitivity }
-            .firstOrNull { it != MicrophoneInfo.SENSITIVITY_UNKNOWN && it in -60f..-10f }
-            ?.toDouble()
     }
 
     fun resetStats() {
