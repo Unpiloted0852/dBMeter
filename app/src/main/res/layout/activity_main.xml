@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    android:id="@+id/root"
     android:layout_height="match_parent"
     android:background="#1A1A1A"
     tools:context=".MainActivity">
@@ -38,7 +39,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="60dp"/>
+        android:layout_marginTop="32dp"/>
 
     <TextView
         android:id="@+id/tvUnit"
@@ -156,6 +157,10 @@
             android:text="dBA"
             android:textSize="13sp"
             android:textAllCaps="false"
+            android:letterSpacing="0"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:minWidth="0dp"
             android:maxLines="1"
             android:backgroundTint="#444444"/>
         <Button
@@ -168,6 +173,10 @@
             android:text="Fast"
             android:textSize="13sp"
             android:textAllCaps="false"
+            android:letterSpacing="0"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:minWidth="0dp"
             android:maxLines="1"
             android:backgroundTint="#444444"/>
         <Button
@@ -180,6 +189,10 @@
             android:text="Calibrate"
             android:textSize="13sp"
             android:textAllCaps="false"
+            android:letterSpacing="0"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:minWidth="0dp"
             android:maxLines="1"
             android:backgroundTint="#444444"/>
         <Button
@@ -192,6 +205,10 @@
             android:text="Reset"
             android:textSize="13sp"
             android:textAllCaps="false"
+            android:letterSpacing="0"
+            android:paddingStart="0dp"
+            android:paddingEnd="0dp"
+            android:minWidth="0dp"
             android:maxLines="1"
             android:backgroundTint="#444444"/>
     </LinearLayout>

@@ -59,8 +59,9 @@ class GraphView @JvmOverloads constructor(
 
             // Draw dB labels
             val db = 110 - (110.0 / numHorizontalLines) * i
-            // The top label goes under its line, the rest sit on theirs.
-            canvas.drawText("${db.toInt()}", 5f, if (i == 0) y + textPaint.textSize else y - 5, textPaint)
+            // Each label sits under its line; the bottom one has to go above.
+            val textY = if (i == numHorizontalLines) y - 5 else y + textPaint.textSize
+            canvas.drawText("${db.toInt()}", 5f, textY, textPaint)
         }
 
         // Draw vertical time grid (every 5 seconds)

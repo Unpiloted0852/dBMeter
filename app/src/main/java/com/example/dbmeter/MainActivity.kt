@@ -15,6 +15,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -48,7 +50,9 @@ class MainActivity : AppCompatActivity() {
 
     private val historyData = mutableListOf<Pair<Long, Double>>() // timestamp, dB value
     private var lastLevel = 0.0
+    private var lastRawLevel = 0.0
     private var tvCalibration: TextView? = null
+    private var tvDiagnostics: TextView? = null
 
     // Permissions
     private val requestPermissionLauncher =
@@ -63,6 +67,13 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // The app draws edge to edge on Android 15+; keep everything clear of the system bars.
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.root)) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            insets
+        }
 
         // Keep screen on while app is open
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -172,6 +183,7 @@ class MainActivity : AppCompatActivity() {
         // Shown from 0 up; the top is wherever the microphone overloads.
         val db = reading.level.coerceAtLeast(0.0)
         lastLevel = db
+        lastRawLevel = reading.level
 
         if (reading.leq != null) {
             val currentTime = System.currentTimeMillis()
@@ -186,6 +198,7 @@ class MainActivity : AppCompatActivity() {
         tvStats.text = formatStats(reading)
         graphView.updateData(historyData)
         tvCalibration?.text = calibrationText()
+        tvDiagnostics?.text = diagnosticsText()
     }
 
     private fun updateUI(db: Double, overload: Boolean) {
@@ -261,6 +274,12 @@ class MainActivity : AppCompatActivity() {
         Locale.US, "Reading: %.1f %s\nTrim: %+.1f dB", lastLevel, weighting.label, trimDb
     )
 
+    /** Small print for the calibration dialog: enough to tell what a wrong reading comes from. */
+    private fun diagnosticsText(): String {
+        val c = capture ?: return ""
+        return String.format(Locale.US, "%s\nRaw level %.1f dBFS", c.description, lastRawLevel - c.fullScaleDb - trimDb)
+    }
+
     /**
      * Phone microphones differ by a few dB from the Android reference sensitivity. The trim
      * is added to every reading, so matching one steady sound against a real meter fixes it.
@@ -282,20 +301,31 @@ class MainActivity : AppCompatActivity() {
                 setOnClickListener { setTrim(trimDb + step) }
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         }
+        val diagnostics = TextView(this).apply {
+            textSize = 12f
+            gravity = Gravity.CENTER
+            setPadding(0, pad / 2, 0, 0)
+            text = diagnosticsText()
+        }
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad / 2, pad, 0)
             addView(label)
             addView(buttons)
+            addView(diagnostics)
         }
         tvCalibration = label
+        tvDiagnostics = diagnostics
         AlertDialog.Builder(this)
             .setTitle("Calibration")
             .setMessage("Hold the phone next to a reference sound level meter in steady noise and adjust until both show the same level.")
             .setView(content)
             .setPositiveButton("Done", null)
             .setNeutralButton("Reset to 0") { _, _ -> setTrim(0.0) }
-            .setOnDismissListener { tvCalibration = null }
+            .setOnDismissListener {
+                tvCalibration = null
+                tvDiagnostics = null
+            }
             .show()
     }
 
