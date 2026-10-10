@@ -103,7 +103,7 @@ class LevelMeter(sampleRate: Int, weighting: Weighting, response: Response) {
 
     // The first samples only run the filter (microphone and filter start-up), the next
     // ones seed the time-weighted level so it does not have to climb up from silence.
-    private var warmup = (sampleRate * 0.3).toInt()
+    private var warmup = (sampleRate * 0.5).toInt()
     private val seedLength = (sampleRate * 0.125).toInt()
     private var seedCount = 0
     private var seedSum = 0.0

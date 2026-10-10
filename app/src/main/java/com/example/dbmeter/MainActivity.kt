@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private var weighting = Weighting.A
     private var response = Response.FAST
     private var trimDb = 0.0
+    private var preferUnprocessed = true
 
     private val historyData = mutableListOf<Pair<Long, Double>>() // timestamp, dB value
     private var lastLevel = 0.0
@@ -96,6 +97,7 @@ class MainActivity : AppCompatActivity() {
         weighting = Weighting.entries.firstOrNull { it.name == prefs.getString("weighting", null) } ?: Weighting.A
         response = Response.entries.firstOrNull { it.name == prefs.getString("response", null) } ?: Response.FAST
         trimDb = prefs.getFloat("trimDb", 0f).toDouble()
+        preferUnprocessed = prefs.getBoolean("preferUnprocessed", true)
         updateSettingLabels()
 
         btnWeighting.setOnClickListener {
@@ -145,7 +147,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startRecording() {
         if (capture != null) return
-        val c = AudioCapture(this, weighting, response, trimDb, ::onReading)
+        val c = AudioCapture(this, weighting, response, preferUnprocessed, trimDb, ::onReading)
         if (c.start()) {
             capture = c
         } else {
@@ -163,6 +165,7 @@ class MainActivity : AppCompatActivity() {
         prefs.edit()
             .putString("weighting", weighting.name)
             .putString("response", response.name)
+            .putBoolean("preferUnprocessed", preferUnprocessed)
             .apply()
         updateSettingLabels()
         val wasRecording = capture != null
@@ -313,6 +316,15 @@ class MainActivity : AppCompatActivity() {
             addView(label)
             addView(buttons)
             addView(diagnostics)
+            // The two sources differ in gain: one may suit a given phone better than the other.
+            addView(Button(this@MainActivity).apply {
+                text = "Switch microphone source"
+                isAllCaps = false
+                setOnClickListener {
+                    preferUnprocessed = !preferUnprocessed
+                    applySettings()
+                }
+            })
         }
         tvCalibration = label
         tvDiagnostics = diagnostics

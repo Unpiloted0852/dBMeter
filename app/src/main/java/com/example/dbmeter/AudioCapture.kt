@@ -28,6 +28,7 @@ class AudioCapture(
     context: Context,
     private val weighting: Weighting,
     private val response: Response,
+    private val preferUnprocessed: Boolean,
     trimDb: Double,
     private val onReading: (Reading) -> Unit
 ) {
@@ -58,7 +59,7 @@ class AudioCapture(
     @SuppressLint("MissingPermission") // The activity only calls this once RECORD_AUDIO is granted.
     fun start(): Boolean {
         if (running) return true
-        val sources = if (unprocessed) {
+        val sources = if (unprocessed && preferUnprocessed) {
             listOf(MediaRecorder.AudioSource.UNPROCESSED, MediaRecorder.AudioSource.VOICE_RECOGNITION)
         } else {
             listOf(MediaRecorder.AudioSource.VOICE_RECOGNITION)
